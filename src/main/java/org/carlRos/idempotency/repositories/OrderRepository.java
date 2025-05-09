@@ -1,7 +1,10 @@
 package org.carlRos.idempotency.repositories;
 
+import org.carlRos.idempotency.model.domain.Order;
 import org.carlRos.idempotency.model.entities.OrderEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -22,6 +25,19 @@ public class OrderRepository {
                 .param("orderId", orderId)
                 .query(this::orderRowMapper)
                 .single();
+    }
+
+    public int createOrder(Order order) {
+        final String sql = "INSERT INTO ORDERS (customerid, ordertimestamp) VALUES (:customerId, :orderTimestamp)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcClient.sql(sql)
+            .param("customerId", order.customer().id())
+            .param("orderTimestamp", order.timestamp())
+            .update(keyHolder);
+
+        return keyHolder.getKeyAs(Integer.class);
     }
 
     private OrderEntity orderRowMapper(ResultSet rs, int rowNum) throws SQLException {
